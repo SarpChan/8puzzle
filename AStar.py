@@ -126,22 +126,22 @@ def move(state, operator):
             return None
 
     if operator == "Left":
-        if i not in range(0, puzzleLen, boardSide):
+        if xPos != 0:
 
-            temp = newState[i - 1]
-            newState[i - 1] = newState[i]
-            newState[i] = temp
+            temp = newState[xPos- 1][yPos]
+            newState[xPos- 1][yPos] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
 
             return newState
         else:
             return None
 
     if operator == "Right":
-        if i not in range(boardSide - 1, puzzleLen, boardSide):
+        if xPos != boardSide:
 
-            temp = newState[i + 1]
-            newState[i + 1] = newState[i]
-            newState[i] = temp
+            temp = newState[xPos + 1][yPos]
+            newState[xPos + 1][yPos] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
             return newState
         else:
             return None
