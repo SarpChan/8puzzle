@@ -16,6 +16,7 @@ GOAL = np.array([
 openList = []
 closedList = []
 operator = ["Up","Down", "Left", "Right"]
+boardSide = 0
 
 
 def distance(current):
@@ -47,6 +48,7 @@ class Node:
 
     def __eq__(self, other):
         return self.state == other.state
+
 
 def aStart():
     global openList
@@ -115,11 +117,11 @@ def move(state, operator):
 
     if operator == "Down":
 
-        if i not in range(puzzleLen - boardSide, puzzleLen):
+        if yPos+1 != boardSide:
 
-            temp = newState[i + boardSide]
-            newState[i + boardSide] = newState[i]
-            newState[i] = temp
+            temp = newState[xPos][yPos+1]
+            newState[xPos][yPos+1] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
 
             return newState
         else:
