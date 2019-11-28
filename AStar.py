@@ -12,11 +12,11 @@ GOAL = np.array([
     [8, 0, 4],
     [7, 6, 5],
 ])
-
+root = None
 openList = []
 closedList = []
 operator = ["Up","Down", "Left", "Right"]
-boardSide = 0
+boardSide = 3
 
 
 def distance(current):
@@ -47,53 +47,58 @@ class Node:
         return self.costs, other.costs
 
     def __eq__(self, other):
-        return self.state == other.state
+        return self.state.all() == other.state.all()
 
 
 def aStart():
     global openList
     global closedList
+    global root
 
     root = Node(START, None, None, 0, 0)
-    goal = Node(GOAL, None,None,None,None)
+    goal = Node(GOAL, None,None,None,0)
     heapq.heappush(openList,root)
-    while True:
-        currentNode = heapq.heappop()
+    while openList:
+        currentNode = heapq.heappop(openList)
         if currentNode == goal:
-            return get_path_fom_node(currentNode)
+            return currentNode
 
         closedList.append(currentNode)
         expandNode(currentNode)
-
+    raise Exception("No solution found")
 
 def expandNode(node):
     global openList
     global closedList
 
-    while node.parent is not None:
-        parent = node.parent
-        if parent in closedList:
-            continue
+    neighbors = findNeighbors(node)
+    for neighbor in neighbors:
+
+        tentative_g = node.depth + 1
+        indexNeighbour = -1
+        if neighbor in openList:
+            indexNeighbour = openList.index(neighbor)
+            if openList[indexNeighbour].depth <= tentative_g:
+                continue
+        neighbor.parent = node
+        if indexNeighbour != -1:
+            openList[indexNeighbour].costs = f(neighbor)
+        else:
+            openList.append(neighbor)
+
 
 
 def findNeighbors(node):
     global operator
 
     neighbors = list()
-    neighbors.append(Node(move(node.state, operator[0]), node, 1, node.depth + 1))  # Up
-    neighbors.append(Node(move(node.state, operator[1]), node, 2, node.depth + 1))  # Down
-    neighbors.append(Node(move(node.state, operator[2]), node, 3, node.depth + 1))  # Left
-    neighbors.append(Node(move(node.state, operator[3]), node, 4, node.depth + 1))  # Right
+    neighbors.append(Node(move(node.state, operator[0]), node, 1, node.depth + 1, node.costs))  # Up
+    neighbors.append(Node(move(node.state, operator[1]), node, 2, node.depth + 1, node.costs))  # Down
+    neighbors.append(Node(move(node.state, operator[2]), node, 3, node.depth + 1, node.costs))  # Left
+    neighbors.append(Node(move(node.state, operator[3]), node, 4, node.depth + 1, node.costs))  # Right
     nodes = [neighbor for neighbor in neighbors if neighbor.state]
 
     return nodes
-
-
-def puzzleSize():
-    global puzzleLen, boardSide, start_state
-    puzzleLen = len(start_state)
-    boardSide = int(puzzleLen ** 0.5)
-
 
 def move(state, operator):
     newState = np.copy(state)
@@ -139,7 +144,7 @@ def move(state, operator):
             return None
 
     if operator == "Right":
-        if xPos != boardSide:
+        if xPos+1 != boardSide:
 
             temp = newState[xPos + 1][yPos]
             newState[xPos + 1][yPos] = newState[xPos][yPos]
@@ -156,9 +161,28 @@ def f(node):
     distance(node) + 1 + node.depth
 
 
+
 def get_path_fom_node(node):
-    pass
+    currentNode = node
+    moves = list()
+    while root != currentNode:
+
+        if currentNode.move == 1:
+            movement = 'Up'
+        elif currentNode.move == 2:
+            movement = 'Down'
+        elif currentNode.move == 3:
+            movement = 'Left'
+        else:
+            movement = 'Right'
+
+        moves.insert(0, movement)
+        currentNode = currentNode.parent
+
+    return moves
+
 
 if __name__ == "__main__":
-    puzzleSize()
-    aStart()
+    endNode = aStart()
+    path = get_path_fom_node(endNode)
+    print(path)
