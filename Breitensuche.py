@@ -57,7 +57,7 @@ def search(queue,searchmethode):
                 if neighbor.depth > searchDepth:
                     searchDepth += 1   
 
-
+    raise Exception
 
 '''Breitensuche'''
 def bfs(start_state):
@@ -170,11 +170,15 @@ def puzzleSize():
 def main():
     puzzleSize()
     
-    bfs(start_state)
-    printResult("bfs")
-    
-    dfs(start_state)
-    printResult("dfs")
+    try:
+        bfs(start_state)
+        printResult("bfs")
+        
+        dfs(start_state)
+        printResult("dfs")
+    except:
+        print('Fehler')
+        
     
 
 if __name__ == '__main__':
