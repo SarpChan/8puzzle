@@ -34,7 +34,7 @@ class Node:
         self.state = state
 
     def __str__(self):
-        return f"state:\n {self.state},\n costs: {self.costs}"
+        return "state:\n %s,\n costs: %i" % (self.state,self.costs)
 
     def __lt__(self, other):
         return self.costs, other.costs
@@ -50,6 +50,7 @@ def aStart():
     while openList:
         next_item = heapq.heappop(openList)
         print(next_item)
+
 
 if __name__ == "__main__":
     aStart()
