@@ -142,6 +142,7 @@ def move(state, operator):
             temp = newState[xPos + 1][yPos]
             newState[xPos + 1][yPos] = newState[xPos][yPos]
             newState[xPos][yPos] = temp
+            
             return newState
         else:
             return None
