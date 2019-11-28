@@ -24,21 +24,22 @@ def distance(current):
     for i in range(1,9):
         index = np.where(GOAL == i)
         index_current = np.where(current == i)
-        cost += abs(index_current[0]-index[0]) + abs(index_current[1]-index[1])
-    return cost[0]
+        cost += abs(index_current[0][0]-index[0][0]) + abs(index_current[1][0]-index[1][0])
+    return cost
 
 
 class Node:
 
     def __init__(self, state, parent, move, depth, previousCosts):
-        self.expectedCosts = distance(state)
-        self.previousCosts = previousCosts
-        self.costs = self.expectedCosts + self.previousCosts
-        self.parent = parent
-        # Welches Kommando wird ausgeführt
-        self.move = move
+        if state is not None:
+            self.expectedCosts = distance(state)
+            self.previousCosts = previousCosts
+            self.costs = self.expectedCosts + self.previousCosts
+            self.parent = parent
+            # Welches Kommando wird ausgeführt
+            self.move = move
+            self.depth = depth
         self.state = state
-        self.depth = depth
 
     def __str__(self):
         return "state:\n %s,\n costs: %i" % (self.state,self.costs)
@@ -47,10 +48,10 @@ class Node:
         return self.costs, other.costs
 
     def __eq__(self, other):
-        return self.state.all() == other.state.all()
+        return str(self.state) == str(other.state)
 
 
-def aStart():
+def aStar():
     global openList
     global closedList
     global root
@@ -96,7 +97,7 @@ def findNeighbors(node):
     neighbors.append(Node(move(node.state, operator[1]), node, 2, node.depth + 1, node.costs))  # Down
     neighbors.append(Node(move(node.state, operator[2]), node, 3, node.depth + 1, node.costs))  # Left
     neighbors.append(Node(move(node.state, operator[3]), node, 4, node.depth + 1, node.costs))  # Right
-    nodes = [neighbor for neighbor in neighbors if neighbor.state]
+    nodes = [neighbor for neighbor in neighbors if neighbor.state is not None]
 
     return nodes
 
@@ -183,6 +184,8 @@ def get_path_fom_node(node):
 
 
 if __name__ == "__main__":
-    endNode = aStart()
+    print("Starting")
+    endNode = aStar()
+    print("Found node")
     path = get_path_fom_node(endNode)
     print(path)
