@@ -61,6 +61,7 @@ def aStar():
     heapq.heappush(openList,root)
     while openList:
         currentNode = heapq.heappop(openList)
+        print(currentNode)
         if currentNode == goal:
             return currentNode
 
