@@ -24,7 +24,7 @@ def distance(current):
     cost = 0
     for i in range(1,9):
         index = np.where(GOAL == i)
-        index_current = np.where(current == i)
+        index_current = np.where(current.state == i)
         cost += abs(index_current[0][0]-index[0][0]) + abs(index_current[1][0]-index[1][0])
     return cost
 
@@ -32,15 +32,17 @@ def distance(current):
 class Node:
 
     def __init__(self, state, parent, move, depth, previousCosts):
+        self.state = state
+        self.depth = depth
+        if self.depth is None:
+            self.depth = 0
         if state is not None:
-            self.expectedCosts = distance(state)
+            self.expectedCosts = distance(self)
             self.previousCosts = previousCosts
-            self.costs = self.expectedCosts + self.previousCosts
+            self.costs = f(self)
             self.parent = parent
             # Welches Kommando wird ausgeführt
             self.move = move
-            self.depth = depth
-        self.state = state
 
     def __str__(self):
         return "state:\n %s,\n costs: %i" % (self.state,self.costs)
@@ -168,7 +170,7 @@ def move(state, operator):
 
 def f(node):
     # h(f) + c(parent,node) + g(node)
-    distance(node) + 1 + node.depth
+    return distance(node) + 1
 
 
 def get_path_fom_node(node):
