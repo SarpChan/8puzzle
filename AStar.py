@@ -4,9 +4,9 @@ import heapq
 
 EMPTY = 0
 START = np.array([
-    [2, 8, 3],
-    [1, 6, 4],
-    [7, 0, 5],
+    [2, 4, 8],
+    [6, 7, 3],
+    [1, 5, 0],
 ])
 GOAL = np.array([
     [1, 2, 3],
@@ -21,6 +21,7 @@ boardSide = 3
 
 
 def distance(current):
+    # Berechnet Manhattendistanz zum Ziel
     cost = 0
     for i in range(1,9):
         index = np.where(GOAL == i)
@@ -37,7 +38,7 @@ class Node:
         if state is not None:
             self.expectedCosts = distance(self)
             self.previousCosts = previousCosts
-            self.costs = f(self) + previousCosts
+            self.costs = f(self) + previousCosts +1
             self.parent = parent
             # Welches Kommando wird ausgeführt
             self.move = move
@@ -65,22 +66,29 @@ class Node:
 
 
 def aStar():
+
     global openList
     global closedList
     global root
 
     root = Node(START, None, None, 0)
     goal = Node(GOAL, None,None,0)
+
     heapq.heappush(openList,root)
     while openList:
 
+        # Magical Methods der Nodes verweisen beim Vergleich auf die costs Variabel.
+        # Nach diesen wird dann sortiert
         openList = sorted(openList, reverse=True)
 
         currentNode = openList.pop()
         print(currentNode)
+
         if currentNode == goal:
+
             return currentNode
 
+        # was in der closedList ist, wurde bereits besucht. Wird im expand geprüft
         closedList.append(currentNode)
         expandNode(currentNode)
     raise Exception("No solution found")
@@ -94,6 +102,7 @@ def expandNode(node):
 
     for neighbor in neighbors:
 
+        # wenn neighbor bereits besucht, beachte ihn nicht
         if neighbor in closedList:
             continue
 
@@ -102,18 +111,27 @@ def expandNode(node):
         if neighbor in openList:
             indexNeighbour = openList.index(neighbor)
 
+
         neighbor.parent = node
+
         if indexNeighbour != -1:
-            openList[indexNeighbour].costs = f(neighbor)
+            #Sollte der Pfad zum momentanen State beim betrachteten Neighbor günstiger sein,
+            # als der State, der bereits mit einer Koste in der openList vertreten ist,
+            # dann wird die Node in der openList ersetzt. Das spielt nur für den späteren Pfad eine Rolle.
+            # Sollte eigentlich nur in Grenzfällen vorkommen, die mir gerade nicht einfallen.
+            openList[indexNeighbour] = neighbor if neighbor.costs <= openList[indexNeighbour].costs else openList[indexNeighbour]
         else:
             openList.append(neighbor)
 
 
 def find_neighbors(node):
+    #findet Nachbarn
     global operator
     global closedList
 
     neighbors = list()
+
+    #Nachbar wird aus bestehender Node erstellt und dann noch verschoben
     neighbors.append(Node(move(node.state, operator[0]), node, 1,  node.costs))  # Up
     neighbors.append(Node(move(node.state, operator[1]), node, 2,  node.costs))  # Down
     neighbors.append(Node(move(node.state, operator[2]), node, 3,  node.costs))  # Left
@@ -184,10 +202,13 @@ def move(state, operator):
 
 def f(node):
     # h(f) + c(parent,node) + g(node)
-    return distance(node) + 1
+    return distance(node)
 
 
 def get_path_fom_node(node):
+    # Pfad zur Lösung wird rückwärts erstellt.
+    # Jede Node enthält einen Parent, somit gibt es bei gefundenem Ziel
+    # eine einfach verkettete Liste vom Ziel zum Start
     currentNode = node
     moves = list()
     while root != currentNode:
