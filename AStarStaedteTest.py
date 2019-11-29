@@ -1,49 +1,31 @@
 import numpy as np
 import heapq
-import queue
 
 EMPTY = 0
-START = np.array([
-    [2, 8, 3],
-    [1, 6, 4],
-    [7, 0, 5],
-])
-GOAL = np.array([
-    [1, 2, 3],
-    [8, 0, 4],
-    [7, 6, 5],
-])
+START = None
 root = None
 openList = []
 closedList = []
-operator = ["Up","Down", "Left", "Right"]
 boardSide = 3
 
 
-def distance(current):
-    cost = 0
-    for i in range(1,9):
-        index = np.where(GOAL == i)
-        index_current = np.where(current == i)
-        cost += abs(index_current[0][0]-index[0][0]) + abs(index_current[1][0]-index[1][0])
-    return cost
+class Stadt:
 
+    def __init__(self, name, entfernung):
+        self.name = name
+        self.angrenzend = []
+        self.entfernung = entfernung
+        self.fWert = 0
+        self.vorgaenger = None
 
-class Node:
+    def set_angrenzend(self, staedte):
+        self.angrenzend = staedte
 
-    def __init__(self, state, parent, move, depth, previousCosts):
-        if state is not None:
-            self.expectedCosts = distance(state)
-            self.previousCosts = previousCosts
-            self.costs = self.expectedCosts + self.previousCosts
-            self.parent = parent
-            # Welches Kommando wird ausgeführt
-            self.move = move
-            self.depth = depth
-        self.state = state
+    def set_vorgaenger(self, vg):
+        self.vorgaenger = vg
 
     def __str__(self):
-        return "state:\n %s,\n costs: %i" % (self.state,self.costs)
+        return "%s, Entfernunung nach Würzburg %i" % (self.name, self.entfernung)
 
     def __lt__(self, other):
         return self.costs, other.costs
@@ -52,18 +34,30 @@ class Node:
         return str(self.state) == str(other.state)
 
 
+SB = Stadt("Saarbrücken", 222)
+KL = Stadt("Karlsruhe", 140)
+HB = Stadt("Heilbronn", 87)
+KA = Stadt("Kaiserslautern", 158)
+FRA = Stadt("Frankfurt", 96)
+LH = Stadt("Ludwigshafen", 108)
+WB = Stadt("Würzburg", 0)
+
+KL.set_angrenzend([{
+    "next": HB,
+    "kosten": 84,
+}, ])
+
+
 def aStar():
     global openList
     global closedList
     global root
 
     root = Node(START, None, None, 0, 0)
-    goal = Node(GOAL, None,None,None,0)
-    heapq.heappush(openList,root)
+    goal = Node(GOAL, None, None, None, 0)
+    heapq.heappush(openList, root)
     while openList:
-        openList = sorted(openList,reverse=True)
-        currentNode = openList.pop()
-        print(currentNode)
+
         if currentNode == goal:
             return currentNode
 
@@ -76,12 +70,8 @@ def expandNode(node):
     global openList
     global closedList
 
-    neighbors = find_neighbors(node)
-
+    neighbors = findNeighbors(node)
     for neighbor in neighbors:
-
-        if neighbor in closedList:
-            continue
 
         tentative_g = node.depth + 1
         indexNeighbour = -1
@@ -96,7 +86,7 @@ def expandNode(node):
             openList.append(neighbor)
 
 
-def find_neighbors(node):
+def findNeighbors(node):
     global operator
 
     neighbors = list()
@@ -105,10 +95,8 @@ def find_neighbors(node):
     neighbors.append(Node(move(node.state, operator[2]), node, 3, node.depth + 1, node.costs))  # Left
     neighbors.append(Node(move(node.state, operator[3]), node, 4, node.depth + 1, node.costs))  # Right
     nodes = [neighbor for neighbor in neighbors if neighbor.state is not None]
-    heapList = []
-    for node in nodes:
-        heapq.heappush(heapList,node)
-    return heapList
+
+    return nodes
 
 
 def move(state, operator):
@@ -116,16 +104,16 @@ def move(state, operator):
 
     # Where findet index und gibt zurück (array([pos X]), array([pos Y])
     i = np.where(newState == 0)
-    yPos = i[0][0]
-    xPos = i[1][0]
+    xPos = i[0][0]
+    yPos = i[1][0]
 
     if operator == "Up":
 
-        if xPos != 0:
-        # Wenn ganz oben also X = 0 dann geht move nach oben nicht
-            temp = newState[yPos][xPos-1]
-            newState[yPos][xPos-1] = newState[yPos][xPos]
-            newState[yPos][xPos] = temp
+        if yPos != 0:
+            # Wenn ganz oben also X = 0 dann geht move nach oben nicht
+            temp = newState[xPos][yPos - 1]
+            newState[xPos][yPos - 1] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
 
             return newState
         else:
@@ -133,34 +121,34 @@ def move(state, operator):
 
     if operator == "Down":
 
-        if xPos+1 != boardSide:
+        if yPos + 1 != boardSide:
 
-            temp = newState[yPos][xPos+1]
-            newState[yPos][xPos+1] = newState[yPos][xPos]
-            newState[yPos][xPos] = temp
+            temp = newState[xPos][yPos + 1]
+            newState[xPos][yPos + 1] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
 
             return newState
         else:
             return None
 
     if operator == "Left":
-        if yPos != 0:
+        if xPos != 0:
 
-            temp = newState[yPos- 1][xPos]
-            newState[yPos- 1][xPos] = newState[yPos][xPos]
-            newState[yPos][xPos] = temp
+            temp = newState[xPos - 1][yPos]
+            newState[xPos - 1][yPos] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
 
             return newState
         else:
             return None
 
     if operator == "Right":
-        if yPos+1 != boardSide:
+        if xPos + 1 != boardSide:
 
-            temp = newState[yPos + 1][xPos]
-            newState[yPos + 1][xPos] = newState[yPos][xPos]
-            newState[yPos][xPos] = temp
-            
+            temp = newState[xPos + 1][yPos]
+            newState[xPos + 1][yPos] = newState[xPos][yPos]
+            newState[xPos][yPos] = temp
+
             return newState
         else:
             return None
