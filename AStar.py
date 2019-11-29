@@ -1,6 +1,7 @@
 import numpy as np
 import heapq
 
+
 EMPTY = 0
 START = np.array([
     [2, 8, 3],
@@ -23,32 +24,44 @@ def distance(current):
     cost = 0
     for i in range(1,9):
         index = np.where(GOAL == i)
-        index_current = np.where(current == i)
+        index_current = np.where(current.state == i)
         cost += abs(index_current[0][0]-index[0][0]) + abs(index_current[1][0]-index[1][0])
     return cost
 
 
 class Node:
 
-    def __init__(self, state, parent, move, depth, previousCosts):
+    def __init__(self, state, parent, move,  previousCosts):
+        self.state = state
+
         if state is not None:
-            self.expectedCosts = distance(state)
+            self.expectedCosts = distance(self)
             self.previousCosts = previousCosts
-            self.costs = self.expectedCosts + self.previousCosts
+            self.costs = f(self) + previousCosts
             self.parent = parent
             # Welches Kommando wird ausgeführt
             self.move = move
-            self.depth = depth
-        self.state = state
 
     def __str__(self):
         return "state:\n %s,\n costs: %i" % (self.state,self.costs)
 
     def __lt__(self, other):
-        return self.costs, other.costs
+        return self.costs < other.costs
+
+    def __gt__(self, other):
+        return self.costs > other.costs
+
+    def __le__(self,other):
+        return self.costs <= other.costs
+
+    def __ge__(self,other):
+        return self.costs >= other.costs
 
     def __eq__(self, other):
         return str(self.state) == str(other.state)
+
+    def __repr__(self):
+        return str(self.state)
 
 
 def aStar():
@@ -56,11 +69,14 @@ def aStar():
     global closedList
     global root
 
-    root = Node(START, None, None, 0, 0)
-    goal = Node(GOAL, None,None,None,0)
+    root = Node(START, None, None, 0)
+    goal = Node(GOAL, None,None,0)
     heapq.heappush(openList,root)
     while openList:
-        currentNode = heapq.heappop(openList)
+
+        openList = sorted(openList, reverse=True)
+
+        currentNode = openList.pop()
         print(currentNode)
         if currentNode == goal:
             return currentNode
@@ -69,19 +85,23 @@ def aStar():
         expandNode(currentNode)
     raise Exception("No solution found")
 
+
 def expandNode(node):
     global openList
     global closedList
 
-    neighbors = findNeighbors(node)
+    neighbors = find_neighbors(node)
+
     for neighbor in neighbors:
 
-        tentative_g = node.depth + 1
+        if neighbor in closedList:
+            continue
+
+
         indexNeighbour = -1
         if neighbor in openList:
             indexNeighbour = openList.index(neighbor)
-            if openList[indexNeighbour].depth <= tentative_g:
-                continue
+
         neighbor.parent = node
         if indexNeighbour != -1:
             openList[indexNeighbour].costs = f(neighbor)
@@ -89,34 +109,39 @@ def expandNode(node):
             openList.append(neighbor)
 
 
-
-def findNeighbors(node):
+def find_neighbors(node):
     global operator
+    global closedList
 
     neighbors = list()
-    neighbors.append(Node(move(node.state, operator[0]), node, 1, node.depth + 1, node.costs))  # Up
-    neighbors.append(Node(move(node.state, operator[1]), node, 2, node.depth + 1, node.costs))  # Down
-    neighbors.append(Node(move(node.state, operator[2]), node, 3, node.depth + 1, node.costs))  # Left
-    neighbors.append(Node(move(node.state, operator[3]), node, 4, node.depth + 1, node.costs))  # Right
+    neighbors.append(Node(move(node.state, operator[0]), node, 1,  node.costs))  # Up
+    neighbors.append(Node(move(node.state, operator[1]), node, 2,  node.costs))  # Down
+    neighbors.append(Node(move(node.state, operator[2]), node, 3,  node.costs))  # Left
+    neighbors.append(Node(move(node.state, operator[3]), node, 4,  node.costs))  # Right
     nodes = [neighbor for neighbor in neighbors if neighbor.state is not None]
+    heapList = []
+    for node in nodes:
+        if node not in closedList:
+            heapq.heappush(heapList,node)
+    return heapList
 
-    return nodes
 
 def move(state, operator):
     newState = np.copy(state)
 
     # Where findet index und gibt zurück (array([pos X]), array([pos Y])
     i = np.where(newState == 0)
-    xPos = i[0][0]
-    yPos = i[1][0]
+    yPos = i[0][0]
+    xPos = i[1][0]
+
 
     if operator == "Up":
 
         if yPos != 0:
         # Wenn ganz oben also X = 0 dann geht move nach oben nicht
-            temp = newState[xPos][yPos-1]
-            newState[xPos][yPos-1] = newState[xPos][yPos]
-            newState[xPos][yPos] = temp
+            temp = newState[yPos-1][xPos]
+            newState[yPos-1][xPos] = newState[yPos][xPos]
+            newState[yPos][xPos] = temp
 
             return newState
         else:
@@ -126,9 +151,9 @@ def move(state, operator):
 
         if yPos+1 != boardSide:
 
-            temp = newState[xPos][yPos+1]
-            newState[xPos][yPos+1] = newState[xPos][yPos]
-            newState[xPos][yPos] = temp
+            temp = newState[yPos+1][xPos]
+            newState[yPos+1][xPos] = newState[yPos][xPos]
+            newState[yPos][xPos] = temp
 
             return newState
         else:
@@ -137,9 +162,9 @@ def move(state, operator):
     if operator == "Left":
         if xPos != 0:
 
-            temp = newState[xPos- 1][yPos]
-            newState[xPos- 1][yPos] = newState[xPos][yPos]
-            newState[xPos][yPos] = temp
+            temp = newState[yPos][xPos-1]
+            newState[yPos][xPos-1] = newState[yPos][xPos]
+            newState[yPos][xPos] = temp
 
             return newState
         else:
@@ -148,20 +173,18 @@ def move(state, operator):
     if operator == "Right":
         if xPos+1 != boardSide:
 
-            temp = newState[xPos + 1][yPos]
-            newState[xPos + 1][yPos] = newState[xPos][yPos]
-            newState[xPos][yPos] = temp
+            temp = newState[yPos][xPos +1]
+            newState[yPos][xPos +1] = newState[yPos][xPos]
+            newState[yPos][xPos] = temp
             
             return newState
         else:
             return None
 
 
-
 def f(node):
     # h(f) + c(parent,node) + g(node)
-    distance(node) + 1 + node.depth
-
+    return distance(node) + 1
 
 
 def get_path_fom_node(node):
