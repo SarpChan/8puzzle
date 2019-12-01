@@ -1,19 +1,7 @@
 from collections import deque
 
 
-operator = ["Up","Down", "Left", "Right"]  #Operatoren
-start_state = [2, 8, 3, 1, 6, 4, 7, 0, 5]  #S
-goal_state = [1, 2, 3, 8, 0, 4, 7, 6, 5]   #G 
- 
-
-
-#puzzle Size
-puzzleLen = 0
-boardSize = 0
-
-searchDepth = 0
-
-'''Einzelner zustand'''    
+'''Einzelner zustand des Puzzles'''    
 class Node:
 
     def __init__(self, state, parent, move, depth):
@@ -26,6 +14,16 @@ class Node:
             self.map = ''.join(str(e) for e in self.state)
 
 goalNode = Node
+operator = ["Up","Down", "Left", "Right"]  #Operatoren
+start_state = [2, 8, 3, 1, 6, 4, 7, 0, 5]  #S
+goal_state = [1, 2, 3, 8, 0, 4, 7, 6, 5]   #G 
+ 
+
+puzzleLen = 0 #Puzzlegroesse
+puzzleSize = 0 #Puzzle Seitenlaenge
+
+searchDepth = 0
+
 
 def search(queue,searchmethode):
     global goalNode, searchDepth  
@@ -61,7 +59,7 @@ def search(queue,searchmethode):
 
 '''Breitensuche'''
 def bfs(start_state):
-    queue =  deque([Node(start_state, None, None, 0)]) # Start Node, parent, move, key,depth,cost , 
+    queue =  deque([Node(start_state, None, None, 0)]) 
     search(queue, 'bfs')
 
         
@@ -72,7 +70,7 @@ def dfs(start_state):
     search(stack, "dfs")
     
 
-
+'''Sucht alle Nachbarn eines Puzzlezustands '''
 def findNeighbors(node):
     global operator
     
@@ -85,28 +83,25 @@ def findNeighbors(node):
     
     return nodes
 
-
+'''Erstellt einzelne Nachbarn eines Puzzlezustands'''
 def move(state, operator):
     newState = state[:]
 
-    i = newState.index(0) #sucht die 0
+    i = newState.index(0) 
     if operator == "Up":
-
-        if i not in range(0, boardSize): #prueft den Rand 
-
-            temp = newState[i - boardSize]
-            newState[i - boardSize] = newState[i]
+        if i not in range(0, puzzleSize): #prueft ob neighbor auserhalb des Puzzels liegt
+            temp = newState[i - puzzleSize]
+            newState[i - puzzleSize] = newState[i]
             newState[i] = temp
-
             return newState
         else:
             return None
 
     if operator == "Down": 
-        if i not in range(puzzleLen - boardSize, puzzleLen):
+        if i not in range(puzzleLen - puzzleSize, puzzleLen):
 
-            temp = newState[i + boardSize]
-            newState[i + boardSize] = newState[i]
+            temp = newState[i + puzzleSize]
+            newState[i + puzzleSize] = newState[i]
             newState[i] = temp
 
             return newState
@@ -114,7 +109,7 @@ def move(state, operator):
             return None
 
     if operator == "Left":  
-        if i not in range(0, puzzleLen, boardSize):
+        if i not in range(0, puzzleLen, puzzleSize):
 
             temp = newState[i - 1]
             newState[i - 1] = newState[i]
@@ -125,7 +120,7 @@ def move(state, operator):
             return None
 
     if operator == "Right":  
-        if i not in range(boardSize - 1, puzzleLen, boardSize):
+        if i not in range(puzzleSize - 1, puzzleLen, puzzleSize):
 
             temp = newState[i + 1]
             newState[i + 1] = newState[i]
@@ -134,7 +129,7 @@ def move(state, operator):
         else:
             return None
 
-
+''' Gibt eine Liste der Richtungen des kuerzesten Wegs zurueck'''
 def moveDierection():
     currentNode = goalNode
     moves = list()
@@ -154,22 +149,21 @@ def moveDierection():
 
     return moves
 
-
+''' Gibt die Loesung des Puzzles aus'''
 def printResult(search_methode):
     moves = moveDierection()
-    print("directions from "+ search_methode + ": " + str(moves) + "\n pfad costen: " + str(len(moves)))
+    print("Directions from "+ search_methode + ": " + str(moves) + "\n pfad costen: " + str(len(moves)))
 
-
+''' Berechnet die Laenge und Seitenlaende des Puzzles '''
 def puzzleSize():
-    global puzzleLen, boardSize, start_state
+    global puzzleLen, puzzleSize, start_state
     puzzleLen = len(start_state)
-    boardSize = int(puzzleLen ** 0.5)
+    puzzleSize = int(puzzleLen ** 0.5)
     
     
     
 def main():
     puzzleSize()
-    
     try:
         bfs(start_state)
         printResult("bfs")
@@ -177,7 +171,7 @@ def main():
         dfs(start_state)
         printResult("dfs")
     except:
-        print('Fehler')
+        print("no solution")
         
     
 
