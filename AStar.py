@@ -1,32 +1,68 @@
 import numpy as np
 import heapq
+import time
 
 
-EMPTY = 0
+
 START = np.array([
-    [2, 4, 8],
-    [6, 7, 3],
-    [1, 5, 0],
+    [2, 8, 3],
+    [1, 6, 4],
+    [7, 0, 5],
 ])
 GOAL = np.array([
     [1, 2, 3],
     [8, 0, 4],
     [7, 6, 5],
 ])
+manHeuristic = 'MANHATTAN'
+eucHeuristic = 'EUCLID'
 root = None
 openList = []
 closedList = []
 operator = ["Up","Down", "Left", "Right"]
 boardSide = 3
+inverses = 0
 
+heuristic = ''
+path = []
+
+
+def clear():
+    global root, openList, closedList, heuristic, path
+
+    root = None
+    openList = []
+    closedList = []
+    heuristic = ''
+    path = []
 
 def distance(current):
-    # Berechnet Manhattendistanz zum Ziel
+    global heuristic,eucHeuristic,manHeuristic
+
+    if heuristic == manHeuristic:
+        return manhattan(current)
+    else:
+        return euclidean(current)
+
+
+
+def euclidean(current):
+    # Berechnet Euklidischen Abstand zum Ziel
     cost = 0
     for i in range(1,9):
         index = np.where(GOAL == i)
         index_current = np.where(current.state == i)
-        cost += abs(index_current[0][0]-index[0][0]) + abs(index_current[1][0]-index[1][0])
+        cost += np.sqrt(np.power(index_current[0][0]-index[0][0],2) + np.power(index_current[1][0]-index[1][0],2))
+    return cost
+
+
+def manhattan(current):
+    # Berechnet Manhattandistanz zum Ziel
+    cost = 0
+    for i in range(1, 9):
+        index = np.where(GOAL == i)
+        index_current = np.where(current.state == i)
+        cost += abs(index_current[0][0] - index[0][0]) + abs(index_current[1][0] - index[1][0])
     return cost
 
 
@@ -38,7 +74,7 @@ class Node:
         if state is not None:
             self.expectedCosts = distance(self)
             self.previousCosts = previousCosts
-            self.costs = f(self) + previousCosts +1
+            self.costs = distance(self) + previousCosts +1
             self.parent = parent
             # Welches Kommando wird ausgeführt
             self.move = move
@@ -72,6 +108,7 @@ def aStar():
     global root
 
     root = Node(START, None, None, 0)
+    print("Expected cost:",root.expectedCosts)
     goal = Node(GOAL, None,None,0)
 
     heapq.heappush(openList,root)
@@ -82,7 +119,7 @@ def aStar():
         openList = sorted(openList, reverse=True)
 
         currentNode = openList.pop()
-        print(currentNode)
+
 
         if currentNode == goal:
 
@@ -229,8 +266,25 @@ def get_path_fom_node(node):
 
 
 if __name__ == "__main__":
-    print("Starting")
+
+    start_time = time.time()
+    heuristic = 'MANHATTAN'
+    print("Starting A* with Manhatten")
     endNode = aStar()
     print("Found node")
     path = get_path_fom_node(endNode)
-    print(path)
+    print("Actual cost:", len(path))
+    print("Solution path:", path)
+    print("This took %s seconds" % (time.time() - start_time))
+    print("---------------------------------")
+    clear()
+
+    start_time = time.time()
+    heuristic = 'EUCLIDEAN'
+    print("Starting A* with Euclidean")
+    endNode = aStar()
+    print("Found node")
+    path = get_path_fom_node(endNode)
+    print("Actual cost:", len(path))
+    print("Solution path:", path)
+    print("This took %s seconds" % (time.time() - start_time))
